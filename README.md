@@ -17,8 +17,8 @@ This project aims to develop a simple travelling website based on the client/ser
 **Technologies:**
 
 * **Frontend:** 
-    * HTML, CSS, JavaScript (or a frontend framework like React, Vue, or Angular)
+    * HTML, CSS, JavaScript
 * **Backend:** 
     * Node.js, Express.js
 * **Database:** 
-    * MongoDB (or another suitable database)
+    * MongoDB
