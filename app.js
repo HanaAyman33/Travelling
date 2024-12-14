@@ -31,6 +31,64 @@ const collection = database.collection('myCollection');
 
 //client.close();
 
+// Route to handle login form submission
+app.post('/', async (req, res) => {
+  
+  try {
+    // Extract the username and password from the request body
+    const { username, password } = req.body;
+    await client.connect();
+    // Query MongoDB for a user with the given username
+    const user = await collection.findOne({ username: username });
+
+    // Check if the user exists and if the password matches
+    if (user && user.password === password) {
+      // Store user session data
+      req.session.user = user;
+
+      // Redirect the user to the home page upon successful login
+      return res.redirect('/home');
+    } else {
+      // Send an error message if login credentials are incorrect
+      return res.status(401).send('Invalid username or password');
+    }
+  } catch (err) {
+    // Handle unexpected errors
+    console.error(err);
+    return res.status(500).send('Internal server error');
+  }
+});
+
+//Registration
+app.post('/register', async (req, res) => {
+  const { username, password } = req.body;
+
+
+      await client.connect();
+      const db = client.db('myDB');
+      const collection = db.collection('myCollection');
+
+
+      
+      if (await collection.findOne({ username })) {
+          return res.status(400).send("Username already exists. Please choose another.");
+      }
+     
+
+      
+      await collection.insertOne({ 
+          username: username, 
+          password: password, 
+          wanttogo: [] 
+      });
+
+    
+      res.redirect('/');
+ 
+      await client.close();
+  
+});
+
 const dom = new JSDOM(`
     <!DOCTYPE html>
     <html>
