@@ -424,9 +424,35 @@ app.get('/searchresults', function(req, res) {
     res.render('searchresults');
 });
 
-app.get('/wanttogo', function(req, res) {
-    res.render('wanttogo');
+app.get('/wanttogo', async (req, res) => {
+    const { username } = req.session;  // Access username from session
+
+    if (!username) {
+        return res.status(401).send("User not logged in.");
+    }
+
+    try {
+        await client.connect();
+        const db = client.db('myDB');
+        const collection = db.collection('myCollection');
+
+        const user = await collection.findOne({ username });
+
+        if (!user) {
+            return res.status(404).send("User not found.");
+        }
+
+        // Pass the 'wanttogo' list to the view
+        res.render('wanttogo', { destinations: user.wanttogo });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occurred while fetching the list.");
+    } finally {
+        await client.close();
+    }
 });
+
 
 app.get('/searchresults', function(req, res) {
     res.render('searchresults');
