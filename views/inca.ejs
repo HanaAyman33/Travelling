@@ -82,5 +82,36 @@
     <div class="video">
         <iframe width="480" height="360" src="https://www.youtube.com/embed/cnMa-Sm9H4k" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
     </div>
+    <script>
+        const inca = document.getElementById('Inca');
+        inca.addEventListener('click', async () => {
+            try {
+                // Send a POST request to the server with the destination "Annapurna"
+                const response = await fetch('/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        // username: document.getElementById('username').value, // Assuming username field exists
+                        // password: document.getElementById('password').value,  // Assuming password field exists
+                        destination: 'Inca'
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Alert success message (optional)
+                    alert('Inca added to your list!');
+
+                } else {
+                    alert(result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    </script>
 </body>
 </html>
