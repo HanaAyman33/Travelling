@@ -13,6 +13,14 @@ const app = express();
 app.set('views', path.join(__dirname, 'views')); 
 app.set('view engine', 'ejs'); 
 
+app.use(session({
+    secret: 'your_secret_key', // Replace with a strong secret key
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 60 * 60 * 1000, // Session expires after 1 hour
+    }
+  }));  
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public'))); 
@@ -36,12 +44,14 @@ app.post('/', async (req, res) => {
 
     // Check if the user exists and if the password matches
     if (user && user.password === password) {
-      // Store user session data
+        // Store user data in the session
+        req.session.user = {
+          id: user._id,
+          username: user.username,
+          wanttogo: user.wanttogo || [],
+        };
       
-      //req.session.user = user;
-
-      // Redirect the user to the home page upon successful login
-      return res.redirect('/home');
+    return res.redirect('/home');
     } else {
       // Send an error message if login credentials are incorrect
       return res.status(401).send('Invalid username or password');
@@ -78,14 +88,15 @@ app.post('/register', async (req, res) => {
 });
 
 //Want-to-go list
-app.post('/search', async (req, res) => {
+app.post('/search', isAuthenticated, async (req, res) => {
     const { username, password, destination } = req.body;
     
     try {
+        const username = req.session.user.username;
         await client.connect();
         const user = await collection.findOne({ username: username });
   
-        const existingDestination = user.wtg.includes(destination);
+        const existingDestination = user.wanttogo.includes(destination);
         
         if (existingDestination) {
             return res.status(400).json({ message: `${destination} already exists in your want-to-go list.` });
@@ -96,6 +107,9 @@ app.post('/search', async (req, res) => {
             { username: username },
             { $push: { wtg: destination } }
         );
+
+         // Update the session data
+        req.session.user.wanttogo.push(destination);
         
         // Send success message upon successful addition
         return res.status(200).json({ message: `${destination} added to your want-to-go list.` });
@@ -108,6 +122,15 @@ app.post('/search', async (req, res) => {
   });
 
 //get requests
+
+//To protect routes and ensure only logged-in users can access them
+function isAuthenticated(req, res, next) {
+    if (req.session.user) {
+      return next();
+    }
+    res.redirect('/');
+  }
+  
 app.get('/',function(req,res){
     res.render('login')
 });
@@ -132,8 +155,9 @@ app.get('/hiking',function(req,res){
     res.render('hiking');
 });
 
-app.get('/home',function(req,res){
-    res.render('home');
+app.get('/home',isAuthenticated,(req,res) =>{
+    const user = req.session.user;
+    res.render('home',{ user }); // Passing user data
 });
 
 app.get('/islands',function(req,res){
@@ -165,7 +189,8 @@ app.get('/searchresults',function(req,res){
 });
 
 app.get('/wanttogo',function(req,res){
-    res.render('wanttogo');
+    res.render('wanttogo', { wanttogo: req.session.user.wanttogo });
+    // res.render('wanttogo');
 });
 
 app.get('/searchresults',function(req,res){
