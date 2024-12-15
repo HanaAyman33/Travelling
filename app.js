@@ -22,18 +22,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 const uri = "mongodb://localhost:27017/"; 
 const client = new MongoClient(uri);
 
-//await client.connect();
 const database = client.db('myDB'); 
 const collection = database.collection('myCollection');
 
-//trial
-//const result = await collection.insertOne({username:'Hana.Ayman',password:'hanoon33',wanttogo:[]});    
-
-//client.close();
-
-// Route to handle login form submission
-app.post('/', async (req, res) => {
-  
+//Login
+app.post('/', async (req, res) => {  
   try {
     // Extract the username and password from the request body
     const { username, password } = req.body;
@@ -44,7 +37,8 @@ app.post('/', async (req, res) => {
     // Check if the user exists and if the password matches
     if (user && user.password === password) {
       // Store user session data
-      req.session.user = user;
+      
+      //req.session.user = user;
 
       // Redirect the user to the home page upon successful login
       return res.redirect('/home');
@@ -63,262 +57,55 @@ app.post('/', async (req, res) => {
 app.post('/register', async (req, res) => {
   const { username, password } = req.body;
 
-
       await client.connect();
       const db = client.db('myDB');
       const collection = db.collection('myCollection');
 
-
-      
       if (await collection.findOne({ username })) {
           return res.status(400).send("Username already exists. Please choose another.");
       }
-     
 
-      
       await collection.insertOne({ 
           username: username, 
           password: password, 
           wanttogo: [] 
       });
 
-    
       res.redirect('/');
  
       await client.close();
   
 });
 
-const dom = new JSDOM(`
-    <!DOCTYPE html>
-    <html>
-      <body>
-        <div id="Annapurna"></div> 
-      </body>
-    </html>
-  `);
-const document = dom.window.document; 
-
-const list = document.getElementById('wanttogo_list');
-
-const annapurna = document.getElementById('Annapurna');//annapurna
-annapurna.addEventListener('click', () => {
-    try{
-        client.connect();
-        const usernameInput = document.getElementsByName("username")[0];
-        const passwordInput = document.getElementsByName("password")[0];
-
-        const existingDocument = collection.findOne({
-        username: usernameInput.value,
-        password: passwordInput.value,
-        wtg: { $in: ["Annapurna"] } 
-        });
+//Want-to-go list
+app.post('/search', async (req, res) => {
+    const { username, password, destination } = req.body;
     
-        if (existingDocument) {
-            alert("Annapurna already exists in your want-to-go list.");
-          } 
-        else {
-            const text = document.createElement('div');
-            text.textContent("Annapurna");
-            const item = document.createElement('li');
-            item.append(text);
-            list.append(item);
-      
-            collection.updateOne(
-              { username: usernameInput.value, password: passwordInput.value },
-              { $push: { "wtg": "Annapurna" } }
-            );
-          }
-      
-        } catch (error) {
-          console.error("An error occurred:", error);
-        } finally {
-            client.close();
+    try {
+        await client.connect();
+        const user = await collection.findOne({ username: username });
+  
+        const existingDestination = user.wtg.includes(destination);
+        
+        if (existingDestination) {
+            return res.status(400).json({ message: `${destination} already exists in your want-to-go list.` });
         }
-});
-
-
-const bali = document.getElementById('Bali');//bali
-  bali.addEventListener('click', () => {
-    try{
-        client.connect();
-        const usernameInput = document.getElementsByName("username")[0];
-        const passwordInput = document.getElementsByName("password")[0];
-
-        const existingDocument = collection.findOne({
-        username: usernameInput.value,
-        password: passwordInput.value,
-        wtg: { $in: ["Bali"] } 
-        });
-    
-        if (existingDocument) {
-            alert("Bali already exists in your want-to-go list.");
-          } 
-        else {
-            const text = document.createElement('div');
-            text.textContent("Bali");
-            const item = document.createElement('li');
-            item.append(text);
-            list.append(item);
-      
-            collection.updateOne(
-              { username: usernameInput.value, password: passwordInput.value },
-              { $push: { "wtg": "Bali" } }
-            );
-          }
-    } 
-    catch (error) {
-        console.error("An error occurred:", error);
+  
+        // Update the user's "want-to-go" list
+        await collection.updateOne(
+            { username: username },
+            { $push: { wtg: destination } }
+        );
+        
+        // Send success message upon successful addition
+        return res.status(200).json({ message: `${destination} added to your want-to-go list.` });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'An error occurred while adding to the list.' });
+    } finally {
+        await client.close();
     }
-    finally {
-        client.close();
-    }
-});
-
-const inca = document.getElementById('Inca');//inca
-inca.addEventListener('click', () => {
-    try{
-        client.connect();
-        const usernameInput = document.getElementsByName("username")[0];
-        const passwordInput = document.getElementsByName("password")[0];
-
-        const existingDocument = collection.findOne({
-        username: usernameInput.value,
-        password: passwordInput.value,
-        wtg: { $in: ["Inca"] } 
-        });
-    
-        if (existingDocument) {
-            alert("Inca already exists in your want-to-go list.");
-          } 
-        else {
-            const text = document.createElement('div');
-            text.textContent("Inca");
-            const item = document.createElement('li');
-            item.append(text);
-            list.append(item);
-      
-            collection.updateOne(
-              { username: usernameInput.value, password: passwordInput.value },
-              { $push: { "wtg": "Inca" } }
-            );
-          }
-    }
-    catch (error) {
-        console.error("An error occurred:", error);
-    }
-    finally {
-        client.close();
-    }
-});
-
-const paris = document.getElementById('Paris');//paris
-paris.addEventListener('click', () => {
-    try{
-        client.connect();
-        const usernameInput = document.getElementsByName("username")[0];
-        const passwordInput = document.getElementsByName("password")[0];
-
-        const existingDocument = collection.findOne({
-        username: usernameInput.value,
-        password: passwordInput.value,
-        wtg: { $in: ["Paris"] } 
-        });
-    
-        if (existingDocument) {
-            alert("Paris already exists in your want-to-go list.");
-          } 
-        else {
-            const text = document.createElement('div');
-            text.textContent("Paris");
-            const item = document.createElement('li');
-            item.append(text);
-            list.append(item);
-      
-            collection.updateOne(
-              { username: usernameInput.value, password: passwordInput.value },
-              { $push: { "wtg": "Paris" } }
-            );
-          }
-      
-        } catch (error) {
-          console.error("An error occurred:", error);
-        } finally {
-            client.close();
-        }
-});
-
-const rome = document.getElementById('Rome');//rome
-rome.addEventListener('click', () => {
-    try{
-        client.connect();
-        const usernameInput = document.getElementsByName("username")[0];
-        const passwordInput = document.getElementsByName("password")[0];
-
-        const existingDocument = collection.findOne({
-        username: usernameInput.value,
-        password: passwordInput.value,
-        wtg: { $in: ["Rome"] } 
-        });
-    
-        if (existingDocument) {
-            alert("Rome already exists in your want-to-go list.");
-          } 
-        else {
-            const text = document.createElement('div');
-            text.textContent("Rome");
-            const item = document.createElement('li');
-            item.append(text);
-            list.append(item);
-      
-            collection.updateOne(
-              { username: usernameInput.value, password: passwordInput.value },
-              { $push: { "wtg": "Rome" } }
-            );
-          }
-      
-        } catch (error) {
-          console.error("An error occurred:", error);
-        } finally {
-            client.close();
-        }
-});
-
-const santorini = document.getElementById('Santorini');//santorini
-santorini.addEventListener('click', () => {
-    try{
-        client.connect();
-        const usernameInput = document.getElementsByName("username")[0];
-        const passwordInput = document.getElementsByName("password")[0];
-
-        const existingDocument = collection.findOne({
-        username: usernameInput.value,
-        password: passwordInput.value,
-        wtg: { $in: ["Santorini"] } 
-        });
-    
-        if (existingDocument) {
-            alert("Santorini already exists in your want-to-go list.");
-          } 
-        else {
-            const text = document.createElement('div');
-            text.textContent("Santorini");
-            const item = document.createElement('li');
-            item.append(text);
-            list.append(item);
-      
-            collection.updateOne(
-              { username: usernameInput.value, password: passwordInput.value },
-              { $push: { "wtg": "Santorini" } }
-            );
-          }
-      
-        } catch (error) {
-          console.error("An error occurred:", error);
-        } finally {
-            client.close();
-        }
-});
+  });
 
 //get requests
 app.get('/',function(req,res){
@@ -385,4 +172,5 @@ app.get('/searchresults',function(req,res){
     res.render('searchresults');
 });
 
+client.close();
 app.listen(3000);//we are telling the express server to receive the requests coming to the local host on port # 3000
