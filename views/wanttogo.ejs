@@ -14,11 +14,15 @@
             -webkit-text-stroke: 1px blue;
         }
 
-        .wanttogo_list{
-            text-align:left;
+        .wtg-list{
+            position: absolute; /* Position the list relative to its nearest positioned ancestor */
+            top: 200px;        /* Start 200px from the top of the page */
+            left: 100px;       /* Start 100px from the left of the page */
+            padding: 0;        /* Remove default padding if needed */
+            margin: 0;  
+            text-align:center;
             color: white;
-            font-size: 30px;
-            padding: 10px;
+            font-size: 25px;
         }
     </style>
     <meta charset="UTF-8">
@@ -36,7 +40,10 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="wanttogo_list" name="wtg">
+            <ul class="wtg-list" name="wtg">
+                <% wanttogo.forEach(destination => { %>
+                    <li><%= destination %></li>
+                <% }); %>
             </ul>
             <form method="POST" action='/search' class="form-inline my-2 my-lg-0">
                 <input class="form-control mr-sm-2" name="Search" type="search" placeholder="Search"
