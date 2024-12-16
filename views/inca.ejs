@@ -52,22 +52,21 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
-
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-2">
         <a class="navbar-brand" style="color: rgb(191, 255, 161)">Inca Trail to Machu Picchu</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
             aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav mr-auto">
-            </ul>
-            <form method="POST" action='/search' class="form-inline my-2 my-lg-0">
-                <input class="form-control mr-sm-2" name="Search" type="search" placeholder="Search"
-                    aria-label="Search">
-                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-            </form>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+        </ul>
+        <form method="POST" action='/search' class="form-inline my-2 my-lg-0">
+            <input class="form-control mr-sm-2" name="Search" type="search" placeholder="Search"
+                   aria-label="Search">
+            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+        </form>
         </div>
     </nav>
     <div class="container1">
@@ -77,40 +76,35 @@
         Peru's Inca Trail is perhaps the world's greatest hike because it combines the best of both types of travel: a four-to-five day walk to the spectacular lost city of Machu Picchu that winds through the zone where the snowcapped Andes Mountains crash into the lush Amazon jungle.
     </div>
     <div class="wanttogo">
-        <button id="Inca" class="btn btn-secondary ml-3">Add to Want-to-Go List</button>
+    <form action="/Inca" method="POST">
+        <button type="submit" id="Inca">Add to Want-to-Go List</button>
+    </form>
     </div>
     <div class="video">
         <iframe width="480" height="360" src="https://www.youtube.com/embed/cnMa-Sm9H4k" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
     </div>
     <script>
-        const inca = document.getElementById('Inca');
-        inca.addEventListener('click', async () => {
-            try {
-                // Send a POST request to the server with the destination "Annapurna"
-                const response = await fetch('/search', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        // username: document.getElementById('username').value, // Assuming username field exists
-                        // password: document.getElementById('password').value,  // Assuming password field exists
-                        destination: 'Inca'
-                    })
+        // Dynamically handles button clicks for adding destinations to the "Want-to-Go" list
+        document.getElementById('Inca').addEventListener('click', function() {
+            // Sends a POST request with the destination 'Inca'
+            fetch('/add-to-wanttogo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ destination: 'Inca' })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Inca added to Want-to-Go list.');
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
                 });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    // Alert success message (optional)
-                    alert('Inca added to your list!');
-
-                } else {
-                    alert(result.message);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-            }
         });
     </script>
 </body>
