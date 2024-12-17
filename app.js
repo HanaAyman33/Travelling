@@ -10,6 +10,11 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+app.all('/search', (req, res) => {
+    console.warn('Blocked all requests to /search!');
+    res.status(404).send('Not Found');
+});
+
 app.set('views', path.join(__dirname, 'views')); 
 app.set('view engine', 'ejs'); 
 
@@ -29,56 +34,135 @@ app.use(session({
 const uri = "mongodb://localhost:27017/"; 
 const client = new MongoClient(uri);
 
-const database = client.db('myDB'); 
-const collection = database.collection('myCollection');
+let collection;
+async function connectToDatabase() {
+try {
+    await client.connect();
+    console.log("Connected successfully to MongoDB");
+    const database = client.db('myDB');
+    collection = database.collection('myCollection');
+} catch (error) {
+    console.error("Error connecting to MongoDB:", error);
+    process.exit(1); // Exit the process if the database connection fails
+}
+}
+await connectToDatabase();
+
+process.on('SIGINT', async () => {
+    console.log("Closing MongoDB connection...");
+    await client.close();
+    process.exit(0);
+});
+
+// Middleware to show search bar on relevant pages
+app.use((req, res, next) => {
+    const excludedPaths = ['/registration', '/login'];
+    if (!excludedPaths.includes(req.path)) {
+        res.locals.showSearchBar = true;
+    } else {
+        res.locals.showSearchBar = false;
+    }
+    next();
+});
+
+// Search results route
+app.get('/getsearch', async (req, res) => {
+    const searchQuery = req.query.q;
+
+    if (!searchQuery || searchQuery.trim() === '') {
+        return res.json({ results: [] });
+    }
+
+    try {
+        const regex = new RegExp(searchQuery.trim(), 'i');
+        const results = await collection.find({ name: { $regex: regex } }).toArray();
+        res.json({ results });
+    } catch (error) {
+        console.error('Error during search:', error);
+        res.status(500).json({ message: 'An error occurred while searching.' });
+    }
+});
+
+app.post('/getsearch', (req, res) => {
+    console.warn('POST request to /getsearch detected!');
+    res.status(405).send('POST method not allowed.');
+});
+
+// Example destination routes
+['annapurna', 'bali', 'inca', 'paris', 'rome', 'santorini'].forEach((destination) => {
+    app.get(`/${destination}`, (req, res) => {
+        res.render(destination);
+    });
+});
 
 //Login
 app.post('/', async (req, res) => {  
-  try {
-    // Extract the username and password from the request body
-    const { username, password } = req.body;
-    await client.connect();
-    // Query MongoDB for a user with the given username
-    const user = await collection.findOne({ username: username });
-
-    // Check if the user exists and if the password matches
-    if (user && user.password === password) {
-        // Store user data in the session
-        req.session.username = username;
-
-        // Redirect the user to the home page upon successful login
-        return res.redirect('/home');
-    } else {
-      // Send an error message if login credentials are incorrect
-      return res.status(401).send('Invalid username or password');
-    }
-  } catch (err) {
-    console.error(err);
-    return res.status(500).send('Internal server error');
-  }
-});
-
-//Registration
-app.post('/register', async (req, res) => {
-  const { username, password } = req.body;
-
+    try {
+      // Extract the username and password from the request body
+      const { username, password } = req.body;
       await client.connect();
-      const db = client.db('myDB');
-      const collection = db.collection('myCollection');
-
-      if (await collection.findOne({ username })) {
-          return res.status(400).send("Username already exists. Please choose another.");
+      // Query MongoDB for a user with the given username
+      const user = await collection.findOne({ username: username });
+  
+      // Check if the user exists and if the password matches
+      if (user && user.password === password) {
+          // Store user data in the session
+          req.session.username = username;
+  
+          // Redirect the user to the home page upon successful login
+          return res.redirect('/home');
+      } else {
+        // Send an error message if login credentials are incorrect
+        return res.status(401).send('Invalid username or password');
       }
+    } catch (err) {
+      console.error(err);
+      return res.status(500).send('Internal server error');
+    }
+  });
+  
+  //Registration
+  app.post('/register', async (req, res) => {
+    const { username, password } = req.body;
+  
+        await client.connect();
+        const db = client.db('myDB');
+        const collection = db.collection('myCollection');
+  
+        if (await collection.findOne({ username })) {
+            return res.status(400).send("Username already exists. Please choose another.");
+        }
+  
+        await collection.insertOne({ 
+            username: username, 
+            password: password, 
+            wanttogo: [] 
+        });
+  
+        res.redirect('/');
+   
+        await client.close();
+  });
 
-      await collection.insertOne({ 
-          username: username, 
-          password: password, 
-          wanttogo: [] 
-      });
+// 'Want to go' update route
+app.post('/wanttogo', async (req, res) => {
+    const { username, destination } = req.body;
 
-      res.redirect('/');
- 
-      await client.close();
+    if (!username || !destination) {
+        return res.status(400).send('Invalid request.');
+    }
+
+    try {
+        await collection.updateOne(
+            { username },
+            { $push: { wanttogo: destination } },
+            { upsert: true } // Create user record if it doesn't exist
+        );
+        res.status(200).send('Destination added to want-to-go list.');
+    } catch (error) {
+        console.error('Error updating want-to-go list:', error);
+        res.status(500).send('An error occurred.');
+    }
 });
 
 //Want-to-go list
@@ -447,10 +531,6 @@ app.get('/wanttogo', async (req, res) => {
     } finally {
         await client.close();
     }
-});
-
-app.get('/searchresults',function(req,res){
-    res.render('searchresults');
 });
 
 client.close();
