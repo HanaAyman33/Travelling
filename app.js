@@ -3,17 +3,11 @@ import path from 'path';
 import { fileURLToPath } from 'url'; 
 import session from 'express-session';
 import { MongoClient } from 'mongodb';
-import { JSDOM } from 'jsdom';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-
-app.all('/search', (req, res) => {
-    console.warn('Blocked all requests to /search!');
-    res.status(404).send('Not Found');
-});
 
 app.set('views', path.join(__dirname, 'views')); 
 app.set('view engine', 'ejs'); 
@@ -36,15 +30,16 @@ const client = new MongoClient(uri);
 
 let collection;
 async function connectToDatabase() {
-try {
-    await client.connect();
-    console.log("Connected successfully to MongoDB");
-    const database = client.db('myDB');
-    collection = database.collection('myCollection');
-} catch (error) {
-    console.error("Error connecting to MongoDB:", error);
-    process.exit(1); // Exit the process if the database connection fails
-}
+    try {
+        await client.connect();
+        console.log("Connected successfully to MongoDB");
+        const database = client.db('myDB');
+        collection = database.collection('myCollection');
+    } 
+    catch (error) {
+        console.error("Error connecting to MongoDB:", error);
+        process.exit(1); // Exit the process if the database connection fails
+    }
 }
 await connectToDatabase();
 
@@ -54,16 +49,17 @@ process.on('SIGINT', async () => {
     process.exit(0);
 });
 
-// Middleware to show search bar on relevant pages
+app.all('/search', (req, res) => {
+    console.warn('Blocked all requests to /search!');
+    res.status(404).send('Not Found');
+});
+
 app.use((req, res, next) => {
     const excludedPaths = ['/registration', '/login'];
-    if (!excludedPaths.includes(req.path)) {
-        res.locals.showSearchBar = true;
-    } else {
-        res.locals.showSearchBar = false;
-    }
+    res.locals.showSearchBar = !excludedPaths.includes(req.path);
     next();
 });
+
 
 // Search results route
 app.get('/getsearch', async (req, res) => {
@@ -84,7 +80,6 @@ app.get('/getsearch', async (req, res) => {
 });
 
 app.post('/getsearch', (req, res) => {
-    console.warn('POST request to /getsearch detected!');
     res.status(405).send('POST method not allowed.');
 });
 
