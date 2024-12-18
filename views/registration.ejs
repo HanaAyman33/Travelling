@@ -7,18 +7,31 @@
             background-image: url("background2.jpg");
             background-repeat: no-repeat;
             background-size: 100%;
-            }
+        }
+
         h1 {
             color: white;
             text-align: center;
             -webkit-text-stroke: 1px blue;
         }
+
         .cont {
-            position:relative;
-            left:600px;
-            top:50px;
+            position: relative;
+            left: 600px;
+            top: 50px;
             color: white;
             -webkit-text-stroke: 0.5px black;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+            display: none;
+        }
+
+        .success {
+            color: green;
+            font-weight: bold;
         }
     </style>
     <meta charset="UTF-8">
@@ -34,14 +47,82 @@
         <h1>Registration</h1>
     </div>
     <div class="cont">
-        <form method='post' action='/register'>
+        <form id="register-form" method="post" action="/register">
             Username: <br>
-            <input type="text" id="user" name="username"> <br>
+            <input type="text" id="user" name="username" required> <br>
+            <div class="error username-error"></div>
             Password: <br>
-            <input type="password" id="password" name="password"> <br> <br>
+            <input type="password" id="password" name="password" required> <br>
+            <div class="error password-error"></div> <br>
             <input type="submit" id="simple_click" class="btn btn-secondary" value="Register"> <br>
+            <div class="success"></div>
         </form>
     </div>
+    <script>
+        document.getElementById("register-form").onsubmit = function (event) {
+            event.preventDefault();
+
+            // Hide all previous error messages
+            let errors = document.querySelectorAll(".error");
+            for (let error of errors) {
+                error.style.display = "none";
+            }
+
+            // Clear any previous success messages
+            document.querySelector(".success").innerHTML = "";
+
+            let hasError = false;
+
+            // Check username
+            if (this.username.value.trim() === "") {
+                document.querySelector(".username-error").innerHTML = "Please enter a username";
+                document.querySelector(".username-error").style.display = "block";
+                hasError = true;
+            }
+
+            // Check password
+            if (this.password.value.trim() === "") {
+                document.querySelector(".password-error").innerHTML = "Please enter a password";
+                document.querySelector(".password-error").style.display = "block";
+                hasError = true;
+            }
+
+            if (hasError) {
+                return false;
+            }
+
+            // If no error, submit the form via AJAX
+            fetch("/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: this.username.value,
+                    password: this.password.value,
+                }),
+            })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.error) {
+                        // Display server error
+                        document.querySelector(".username-error").innerHTML = result.error;
+                        document.querySelector(".username-error").style.display = "block";
+                    } else {
+                        // Show success message
+                        document.querySelector(".success").innerHTML = "Registration successful!";
+                        
+                        // Redirect to the login page after success
+                        setTimeout(() => {
+                            window.location.href = '/';  
+                        }, 2000);  // Delay for 2 seconds before redirecting
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                });
+
+            return false;
+        };
+    </script>
 </body>
 
 </html>
