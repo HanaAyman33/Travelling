@@ -133,42 +133,6 @@ app.post('/wanttogo', isAuthenticated, async (req, res) => {
     }
 });
 
-// // Consolidated destination routes
-// const destinations = ['inca', 'annapurna', 'bali', 'paris', 'rome', 'santorini'];
-
-// destinations.forEach(destination => {
-//     app.post(`/${destination}`, isAuthenticated, async (req, res) => {
-//         const username = req.session?.user?.username;
-
-//         if (!username) {
-//             return res.status(401).send("User not logged in.");
-//         }
-
-//         try {
-//             const user = await collection.findOne({ username });
-
-//             if (!user) {
-//                 return res.status(404).send("User not found.");
-//             }
-
-//             if (user.wanttogo && user.wanttogo.includes(destination)) {
-//                 return res.status(400).send(`${destination} is already in your want-to-go list.`);
-//             }
-
-//             await collection.updateOne(
-//                 { username },
-//                 { $push: { wanttogo: destination } },
-//                 { upsert: true }
-//             );
-
-//             res.status(200).send(`${destination} added to your want-to-go list.`);
-//         } catch (error) {
-//             console.error("Error adding destination to want-to-go list:", error);
-//             res.status(500).send("An error occurred.");
-//         }
-//     });
-// });
-
 //Want-to-go list
 app.post('/search', async (req, res) => {
     const { username, password, destination } = req.body;
