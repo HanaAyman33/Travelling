@@ -145,7 +145,6 @@
     </style>
     </div>
 </nav>
-
 <!-- Content area -->
 <div class="container">
     <div class="table-responsive">
@@ -156,6 +155,7 @@
             </tr>
             </thead>
             <tbody>
+            <p>Debug: <%= JSON.stringify(destinations) %></p>
             <% if (destinations && destinations.length > 0) { %>
                 <% destinations.forEach(function(destination) { %>
                     <tr>
