@@ -56,14 +56,13 @@
 
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-2">
-        <a class="navbar-brand" style="color: rgb(191, 255, 161)">Inca Trail to Machu Picchu</a>
+        <a class="navbar-brand" style="color: rgb(191, 255, 161)">Paris</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
             aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav mr-auto">
-        </ul>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto"></ul>
         <!-- Updated Search Bar -->
         <div class="search-container">
             <input type="text" id="searchBar" placeholder="Search destinations..." autocomplete="off" />
@@ -139,10 +138,10 @@
     </div>
 </nav>
 <div class="container1">
-    <img id="image" src="/inca.png" width="193" height="300">
+    <img id="image" src="/paris.png" width="193" height="300">
 </div>
 <div class="container2">
-    Peru's Inca Trail is perhaps the world's greatest hike because it combines the best of both types of travel: a four-to-five day walk to the spectacular lost city of Machu Picchu that winds through the zone where the snowcapped Andes Mountains crash into the lush Amazon jungle.
+    It is known as the most romantic city in the world, and is home to some world famous sights that are constantly shown in travel magazines, movies, and other works of art. Paris, the capital of France, has a population of over two million people and is one of Europe's most-visited cities.
 </div>
 <div class="wanttogo">
     <form action="/paris" method="POST">
@@ -150,23 +149,23 @@
     </form>
 </div>
 <div class="video">
-    <iframe width="480" height="360" src="https://www.youtube.com/embed/cnMa-Sm9H4k" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    <iframe width="480" height="360" src="https://www.youtube.com/embed/REDVbTQxMXo" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 <script>
     // Dynamically handles button clicks for adding destinations to the "Want-to-Go" list
-    document.getElementById('Inca').addEventListener('click', function() {
+    document.getElementById('Paris').addEventListener('click', function() {
         // Sends a POST request with the destination 'Inca'
         fetch('/add-to-wanttogo', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ destination: 'Inca' })
+            body: JSON.stringify({ destination: 'Paris' })
         })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Inca added to Want-to-Go list.');
+                    alert('Paris added to Want-to-Go list.');
                 } else {
                     alert('Error: ' + data.message);
                 }
