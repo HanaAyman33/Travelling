@@ -17,32 +17,100 @@
             left:600px;
             top:50px;
             color: white;
+            -webkit-text-stroke: 0.5px black;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+            display: none;
         }
     </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Welcome</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <title>Login</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+        crossorigin="anonymous">
 </head>
-
 <body>
     <div class="container">
-        <h1>Welcome</h1>
+        <h1>Login</h1>
     </div>
     <div class="cont">
-        <form method="POST">
-            Username:<br>
-            <input type="text" name="username">
-            <br>
-            Password:<br>
-            <input type="password" name="password">
-            <br><br>
-            <input type="submit" value="Login">
+        <form id="login-form" method="post">
+            Username: <br>
+            <input type="text" name="username" id="username" required><br>
+            <div class="error username-error"></div>
+            Password: <br>
+            <input type="password" name="password" id="password" required><br><br>
+            <div class="error password-error"></div>
+            <input type="submit" value="Login"><br><br>
+            <div class="error login-error"></div>
+            <a href="registration">Don't have an account?</a>
         </form>
-        <br>
-        <a href="registration">I dont have an account</a>
     </div>
+
+    <script>
+       document.getElementById("login-form").onsubmit = function(event) {
+    event.preventDefault();
+
+    // Hide all previous error messages
+    let errors = document.querySelectorAll(".error");
+    for (let error of errors) {
+        error.style.display = "none";
+    }
+
+    let hasError = false;
+
+    // Check username
+    if (this.username.value.trim() === "") {
+        document.querySelector(".username-error").innerHTML = "Please enter a username";
+        document.querySelector(".username-error").style.display = "block";
+        hasError = true;
+    }
+
+    // Check password
+    if (this.password.value.trim() === "") {
+        document.querySelector(".password-error").innerHTML = "Please enter a password";
+        document.querySelector(".password-error").style.display = "block";
+        hasError = true;
+    }
+
+    if (hasError) {
+        return false;
+    }
+
+    // If no error, submit the form via AJAX
+    fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            username: this.username.value,
+            password: this.password.value,
+        }),
+    })
+    .then(response => {
+        if (response.redirected) {
+            // Handle redirection
+            window.location.href = response.url;
+        } else {
+            return response.json();
+        }
+    })
+    .then(result => {
+        if (result?.error) {
+            // Display error message
+            document.querySelector(".login-error").innerHTML = result.error;
+            document.querySelector(".login-error").style.display = "block";
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+    });
+
+    return false;
+};
+    </script>
+    
 </body>
 </html>
