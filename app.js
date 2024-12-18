@@ -175,7 +175,7 @@ app.post('/search', async (req, res) => {
     
     try {
         const username = req.session?.user?.username;
-        await client.connect();
+        //await client.connect();
         const user = await collection.findOne({ username: username });
   
         const existingDestination = user.wtg.includes(destination);
@@ -196,7 +196,7 @@ app.post('/search', async (req, res) => {
         console.error(error);
         res.status(500).json({ message: 'An error occurred while adding to the list.' });
     } finally {
-        await client.close();
+        //await client.close();
     }
   });
 
@@ -210,7 +210,7 @@ app.post('/Inca', async (req, res) => {
     }
 
     try {
-        await client.connect();
+        //await client.connect();
         const db = client.db('myDB');
         const collection = db.collection('myCollection');
 
@@ -237,7 +237,7 @@ app.post('/Inca', async (req, res) => {
         console.error(error);
         res.status(500).send("An error occurred while adding to the list.");
     } finally {
-        await client.close();
+        //await client.close();
     }
 });
 
@@ -250,7 +250,7 @@ app.post('/annapurna', async (req, res) => {
     }
 
     try {
-        await client.connect();
+        //await client.connect();
         const db = client.db('myDB');
         const collection = db.collection('myCollection');
 
@@ -279,7 +279,7 @@ app.post('/annapurna', async (req, res) => {
         console.error(error);
         res.status(500).send("An error occurred while adding to the list.");
     } finally {
-        await client.close();
+        //await client.close();
     }
 });
 
@@ -293,7 +293,7 @@ app.post('/bali', async (req, res) => {
     }
 
     try {
-        await client.connect();
+        //await client.connect();
         const db = client.db('myDB');
         const collection = db.collection('myCollection');
 
@@ -322,7 +322,7 @@ app.post('/bali', async (req, res) => {
         console.error(error);
         res.status(500).send("An error occurred while adding to the list.");
     } finally {
-        await client.close();
+        //await client.close();
     }
 });
 
@@ -336,7 +336,7 @@ app.post('/paris', async (req, res) => {
     }
 
     try {
-        await client.connect();
+        //await client.connect();
         const db = client.db('myDB');
         const collection = db.collection('myCollection');
 
@@ -365,7 +365,7 @@ app.post('/paris', async (req, res) => {
         console.error(error);
         res.status(500).send("An error occurred while adding to the list.");
     } finally {
-        await client.close();
+        //await client.close();
     }
 });
 
@@ -379,7 +379,7 @@ app.post('/rome', async (req, res) => {
     }
 
     try {
-        await client.connect();
+        //await client.connect();
         const db = client.db('myDB');
         const collection = db.collection('myCollection');
 
@@ -408,7 +408,7 @@ app.post('/rome', async (req, res) => {
         console.error(error);
         res.status(500).send("An error occurred while adding to the list.");
     } finally {
-        await client.close();
+        //await client.close();
     }
 });
 
@@ -421,7 +421,7 @@ app.post('/santorini', async (req, res) => {
     }
 
     try {
-        await client.connect();
+        //await client.connect();
         const db = client.db('myDB');
         const collection = db.collection('myCollection');
 
@@ -450,7 +450,7 @@ app.post('/santorini', async (req, res) => {
         console.error(error);
         res.status(500).send("An error occurred while adding to the list.");
     } finally {
-        await client.close();
+        //await client.close();
     }
 });
 
@@ -514,7 +514,7 @@ app.get('/wanttogo', isAuthenticated, async (req, res) => {
     }
 
     try {
-        await client.connect();
+        //await client.connect();
         const db = client.db('myDB');
         const collection = db.collection('myCollection');
 
@@ -543,7 +543,7 @@ app.post('/', async (req, res) => {
     try {
       // Extract the username and password from the request body
       const { username, password } = req.body;
-      await client.connect();
+      //await client.connect();
       // Query MongoDB for a user with the given username
       const user = await collection.findOne({ username: username });
   
@@ -566,7 +566,7 @@ app.post('/', async (req, res) => {
       return res.status(500).send('Internal server error');
     }
     finally{
-        await client.close();
+       // await client.close();
     }
 });
 
@@ -574,9 +574,9 @@ app.post('/', async (req, res) => {
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
 
-    await client.connect();
-    const db = client.db('myDB');
-    const collection = db.collection('myCollection');
+    //await client.connect();
+    //const db = client.db('myDB');
+    //const collection = db.collection('myCollection');
 
     if (await collection.findOne({ username })) {
         return res.status(400).json({ error: "Username already exists. Please choose another." });
@@ -591,7 +591,7 @@ app.post('/register', async (req, res) => {
     res.json({ message: "Registration successful!" })
     
     
-    await client.close();
+    //await client.close();
 });
 
 app.listen(3000, () => {
