@@ -47,12 +47,21 @@ async function connectToDatabase() {
 connectToDatabase();
 
 function isAuthenticated(req, res, next) {
-    if (req.session.user) {
-      return next(); // User is logged in, allow access
-    } else {
-      res.redirect('/'); // Redirect to login if not authenticated
+    if (req.session && req.session.user) {
+        console.log('Authenticated user:', req.session.user);
+        return next();
     }
+    console.log('Unauthenticated access attempt to:', req.originalUrl);
+    return res.redirect('/');
 }
+app.use((req, res, next) => {
+    if (req.path !== '/' && req.path !== '/register' && !req.session?.user) {
+        return res.redirect('/');
+    }
+    next();
+});
+
+
 
 process.on('SIGINT', async () => {
     console.log("Closing MongoDB connection...");
@@ -515,7 +524,7 @@ app.post('/', async (req, res) => {
       if (user && user.password === password) {
         // Store user session data
         req.session.user = user;
-  
+        console.log('Session set:', req.session.user); // Debug log
         // Redirect the user to the home page upon successful login
         return res.redirect('/home');
       } else {
