@@ -17,12 +17,14 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));//the public folder will contain all static files(images and videos)
 
 // Configure session middleware
-app.use(session({
-    secret: 'your_secret_key', // Replace with your own secret key
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false } // Set to true if using HTTPS
-}));
+app.use(
+    session({
+      secret: 'your_secret_key', // Replace with a strong secret
+      resave: false,
+      saveUninitialized: false,
+      cookie: { secure: false },
+    })
+);
 
 //To connect mongodb to our nodejs code
 const uri = "mongodb://localhost:27017/"; 
@@ -41,7 +43,16 @@ async function connectToDatabase() {
         process.exit(1); // Exit the process if the database connection fails
     }
 }
-await connectToDatabase();
+//await connectToDatabase();
+connectToDatabase();
+
+function isAuthenticated(req, res, next) {
+    if (req.session.user) {
+      return next(); // User is logged in, allow access
+    } else {
+      res.redirect('/'); // Redirect to login if not authenticated
+    }
+}
 
 process.on('SIGINT', async () => {
     console.log("Closing MongoDB connection...");
@@ -59,7 +70,6 @@ app.use((req, res, next) => {
     res.locals.showSearchBar = !excludedPaths.includes(req.path);
     next();
 });
-
 
 // Search results route
 app.get('/getsearch', async (req, res) => {
@@ -90,64 +100,27 @@ app.post('/getsearch', (req, res) => {
     });
 });
 
-//Login
-app.post('/', async (req, res) => {  
-    try {
-      // Extract the username and password from the request body
-      const { username, password } = req.body;
-      await client.connect();
-      // Query MongoDB for a user with the given username
-      const user = await collection.findOne({ username: username });
-  
-      // Check if the user exists and if the password matches
-      if (user && user.password === password) {
-          // Store user data in the session
-          req.session.username = username;
-  
-          // Redirect the user to the home page upon successful login
-          return res.redirect('/home');
-      } else {
-        // Send an error message if login credentials are incorrect
-        return res.status(401).send('Invalid username or password');
-      }
-    } catch (err) {
-      console.error(err);
-      return res.status(500).send('Internal server error');
-    }
-  });
-  
-  //Registration
-  app.post('/register', async (req, res) => {
-    const { username, password } = req.body;
-  
-        await client.connect();
-        const db = client.db('myDB');
-        const collection = db.collection('myCollection');
-  
-        if (await collection.findOne({ username })) {
-            return res.status(400).send("Username already exists. Please choose another.");
-        }
-  
-        await collection.insertOne({ 
-            username: username, 
-            password: password, 
-            wanttogo: [] 
-        });
-  
-        res.redirect('/');
-   
-        await client.close();
-  });
-
 // 'Want to go' update route
-app.post('/wanttogo', async (req, res) => {
-    const { username, destination } = req.body;
+app.post('/wanttogo', isAuthenticated, async (req, res) => {
+    //const { username, destination } = req.body;
+    const username = req.session?.user?.username;
+    const { destination } = req.body;
 
     if (!username || !destination) {
         return res.status(400).send('Invalid request.');
     }
 
     try {
+        const user = await collection.findOne({ username });
+
+        if (!user) {
+            return res.status(404).send("User not found.");
+        }
+
+        if (user.wanttogo && user.wanttogo.includes(destination)) {
+            return res.status(400).send(`${destination} is already in your want-to-go list.`);
+        }
+
         await collection.updateOne(
             { username },
             { $push: { wanttogo: destination } },
@@ -160,12 +133,48 @@ app.post('/wanttogo', async (req, res) => {
     }
 });
 
+// // Consolidated destination routes
+// const destinations = ['inca', 'annapurna', 'bali', 'paris', 'rome', 'santorini'];
+
+// destinations.forEach(destination => {
+//     app.post(`/${destination}`, isAuthenticated, async (req, res) => {
+//         const username = req.session?.user?.username;
+
+//         if (!username) {
+//             return res.status(401).send("User not logged in.");
+//         }
+
+//         try {
+//             const user = await collection.findOne({ username });
+
+//             if (!user) {
+//                 return res.status(404).send("User not found.");
+//             }
+
+//             if (user.wanttogo && user.wanttogo.includes(destination)) {
+//                 return res.status(400).send(`${destination} is already in your want-to-go list.`);
+//             }
+
+//             await collection.updateOne(
+//                 { username },
+//                 { $push: { wanttogo: destination } },
+//                 { upsert: true }
+//             );
+
+//             res.status(200).send(`${destination} added to your want-to-go list.`);
+//         } catch (error) {
+//             console.error("Error adding destination to want-to-go list:", error);
+//             res.status(500).send("An error occurred.");
+//         }
+//     });
+// });
+
 //Want-to-go list
 app.post('/search', async (req, res) => {
     const { username, password, destination } = req.body;
     
     try {
-        const username = req.session.user.username;
+        const username = req.session?.user?.username;
         await client.connect();
         const user = await collection.findOne({ username: username });
   
@@ -192,8 +201,9 @@ app.post('/search', async (req, res) => {
   });
 
 
-  app.post('/Inca', async (req, res) => {
-    const { username } = req.session;  // Access username from session
+app.post('/Inca', async (req, res) => {
+    //const { username } = req.session;  // Access username from session
+    const username = req.session?.user?.username;
 
     if (!username) {
         return res.status(401).send("User not logged in.");
@@ -232,7 +242,8 @@ app.post('/search', async (req, res) => {
 });
 
 app.post('/annapurna', async (req, res) => {
-    const { username } = req.session;  // Access username from session
+    //const { username } = req.session;  // Access username from session
+    const username = req.session?.user?.username;
 
     if (!username) {
         return res.status(401).send("User not logged in.");
@@ -274,7 +285,8 @@ app.post('/annapurna', async (req, res) => {
 
 
 app.post('/bali', async (req, res) => {
-    const { username } = req.session;  // Access username from session
+    //const { username } = req.session;  // Access username from session
+    const username = req.session?.user?.username;
 
     if (!username) {
         return res.status(401).send("User not logged in.");
@@ -316,7 +328,8 @@ app.post('/bali', async (req, res) => {
 
 
 app.post('/paris', async (req, res) => {
-    const { username } = req.session;  // Access username from session
+    //const { username } = req.session;  // Access username from session
+    const username = req.session?.user?.username;
 
     if (!username) {
         return res.status(401).send("User not logged in.");
@@ -358,7 +371,8 @@ app.post('/paris', async (req, res) => {
 
 
 app.post('/rome', async (req, res) => {
-    const { username } = req.session;  // Access username from session
+    //const { username } = req.session;  // Access username from session
+    const username = req.session?.user?.username;
 
     if (!username) {
         return res.status(401).send("User not logged in.");
@@ -398,10 +412,9 @@ app.post('/rome', async (req, res) => {
     }
 });
 
-
-
 app.post('/santorini', async (req, res) => {
-    const { username } = req.session;  // Access username from session
+    //const { username } = req.session;  // Access username from session
+    const username = req.session?.user?.username;
 
     if (!username) {
         return res.status(401).send("User not logged in.");
@@ -442,65 +455,59 @@ app.post('/santorini', async (req, res) => {
 });
 
 //get requests
-
 app.get('/',function(req,res){
     res.render('login')
-});
-
-app.get('/registration',function(req,res){
+  });
+app.get('/registration', function(req,res){
     res.render('registration');
 });
-
-app.get('/annapurna',function(req,res){
+   
+app.get('/home', isAuthenticated, function(req, res) {
+    res.render('home');
+});
+  
+app.get('/annapurna', isAuthenticated, function(req, res) {
     res.render('annapurna');
 });
-
-app.get('/bali',function(req,res){
+  
+app.get('/bali', isAuthenticated, function(req, res) {
     res.render('bali');
 });
-
-app.get('/cities',function(req,res){
+  
+app.get('/cities', isAuthenticated, function(req, res) {
     res.render('cities');
 });
-
-app.get('/hiking',function(req,res){
+  
+app.get('/hiking', isAuthenticated, function(req, res) {
     res.render('hiking');
 });
-
-app.get('/home',(req,res) =>{
-    res.render('home'); // Passing user data
-});
-
-app.get('/islands',function(req,res){
+  
+app.get('/islands', isAuthenticated, function(req, res) {
     res.render('islands');
 });
-
-app.get('/inca',function(req,res){
+  
+app.get('/inca', isAuthenticated, function(req, res) {
     res.render('inca');
 });
-
-app.get('/paris',function(req,res){
+  
+app.get('/paris', isAuthenticated, function(req, res) {
     res.render('paris');
 });
-
-app.get('/registration',function(req,res){
-    res.render('registration');
-});
-
-app.get('/rome',function(req,res){
+  
+app.get('/rome', isAuthenticated, function(req, res) {
     res.render('rome');
 });
-
-app.get('/santorini',function(req,res){
+  
+app.get('/santorini', isAuthenticated, function(req, res) {
     res.render('santorini');
 });
-
-app.get('/searchresults',function(req,res){
+  
+app.get('/searchresults', isAuthenticated, function(req, res) {
     res.render('searchresults');
 });
 
-app.get('/wanttogo', async (req, res) => {
-    const { username } = req.session;  // Access username from session
+app.get('/wanttogo', isAuthenticated, async (req, res) => {
+    const username = req.session?.user?.username;  // Access username from session
 
     if (!username) {
         return res.status(401).send("User not logged in.");
@@ -518,17 +525,75 @@ app.get('/wanttogo', async (req, res) => {
         }
 
         // Pass the 'wanttogo' list to the view
+        const destinations = user.wanttogo || [];
         res.render('wanttogo', { destinations: user.wanttogo });
 
     } catch (error) {
         console.error(error);
         res.status(500).send("An error occurred while fetching the list.");
-    } finally {
+    }
+        //finally {
+    //     await client.close();
+    // }
+});
+
+//Login
+app.post('/', async (req, res) => {
+  
+    try {
+      // Extract the username and password from the request body
+      const { username, password } = req.body;
+      await client.connect();
+      // Query MongoDB for a user with the given username
+      const user = await collection.findOne({ username: username });
+  
+      // Check if the user exists and if the password matches
+      if (user && user.password === password) {
+        // Store user session data
+        req.session.user = user;
+  
+        // Redirect the user to the home page upon successful login
+        return res.redirect('/home');
+      } else {
+        // Send an error message if login credentials are incorrect
+       // return res.render('login', { error: 'Invalid username or password' });
+       return res.status(400).json({ error: "Invalid username or password." });
+         
+      }
+    } catch (err) {
+      // Handle unexpected errors
+      console.error(err);
+      return res.status(500).send('Internal server error');
+    }
+    finally{
         await client.close();
     }
 });
 
-client.close();
+//Registration
+app.post('/register', async (req, res) => {
+    const { username, password } = req.body;
+
+    await client.connect();
+    const db = client.db('myDB');
+    const collection = db.collection('myCollection');
+
+    if (await collection.findOne({ username })) {
+        return res.status(400).json({ error: "Username already exists. Please choose another." });
+    }
+
+    await collection.insertOne({
+        username: username,
+        password: password,
+        wanttogo: []
+    });
+
+    res.json({ message: "Registration successful!" })
+    
+    
+    await client.close();
+});
+
 app.listen(3000, () => {
     console.log('Server is running on port 3000');
 });//we are telling the express server to receive the requests coming to the local host on port # 3000
