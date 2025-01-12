@@ -17,7 +17,7 @@ This project aims to develop a simple travelling website based on the client/ser
 **Technologies:**
 
 * **Frontend:** 
-    * HTML, CSS, JavaScript
+    * HTML, CSS, JavaScript.
 * **Backend:** 
     * Node.js, Express.js
 * **Database:** 
