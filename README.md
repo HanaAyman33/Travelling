@@ -19,6 +19,6 @@ This project aims to develop a simple travelling website based on the client/ser
 * **Frontend:** 
     * HTML, CSS, JavaScript.
 * **Backend:** 
-    * Node.js, Express.js
+    * Node.js, Express.js.
 * **Database:** 
-    * MongoDB
+    * MongoDB.
